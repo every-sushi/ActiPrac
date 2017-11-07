@@ -16,11 +16,17 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
+import com.ryungna.actiprac.model.UserModel;
 
 public class login extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    Button join;
+    Button login;
+    EditText email;
+    EditText passwd;
 
 
     String TAG ="Login Activity:";
@@ -30,42 +36,93 @@ public class login extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        final Button join = (Button)findViewById(R.id.signUp);//
-        final Button login = (Button)findViewById(R.id.signIn);//
+        join = (Button)findViewById(R.id.signUp);
+        login = (Button)findViewById(R.id.signIn);
+        email = (EditText) findViewById(R.id.email);
+        passwd = (EditText) findViewById(R.id.passwd);
+        //String stemail = email.getText().toString();
 
-        final EditText email = (EditText)findViewById(R.id.email);//
-        final EditText passwd = (EditText)findViewById(R.id.passwd);//
 
         mAuth = FirebaseAuth.getInstance();
+
+        join.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                if(email.getText().toString()==null || passwd.getText().toString()==null)
+                    return;
+                mAuth.createUserWithEmailAndPassword(email.getText().toString(), passwd.getText().toString())
+                        .addOnCompleteListener(login.this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                UserModel userModel = new UserModel();
+                                userModel.userName = email.getText().toString();
+
+                                String uid = task.getResult().getUser().getUid();
+                                FirebaseDatabase.getInstance().getReference().child("user").child(uid).setValue(userModel);
+
+                                if (!task.isSuccessful()) {
+                                    Toast.makeText(login.this, "가입 오류",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                                else{//성공적으로 가입이 되면
+                                    Toast.makeText(login.this, "가입성공 \n HELLO dear",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+
+                                // ...
+                            }
+                        });
+
+            }
+        });
+
         mAuthListener = new FirebaseAuth.AuthStateListener() {
 
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();Intent in = new Intent(login.this, navigation.class);
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                Intent in = new Intent(login.this, navigation.class);
                 if (user != null) {
-                    // User is signed in
-
+                    // 유저가 로그인할시에
                     startActivity(in);
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                 } else {
-                    // User is signed out
+                    // 로그아웃일때
                     Log.d(TAG, "onAuthStateChanged:signed_out");
                 }
                 // ...
             }
         };
 
-        join.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                tojoin(email.getText().toString(),passwd.getText().toString());
-            }
-        });
+
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                tologin(email.getText().toString(),passwd.getText().toString());
+                mAuth.signInWithEmailAndPassword(email.getText().toString(), passwd.getText().toString())
+                        .addOnCompleteListener(login.this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                Intent toMain = new Intent(login.this,navigation.class);
+
+                                // If sign in fails, display a message to the user. If sign in succeeds
+                                // the auth state listener will be notified and logic to handle the
+                                // signed in user can be handled in the listener.
+                                if (!task.isSuccessful()) {
+                                    Toast.makeText(login.this, "로그인 오류",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                                else{
+                                    Toast.makeText(login.this, "로그인 성공",
+                                            Toast.LENGTH_SHORT).show();
+                                    startActivity(toMain);
+                                }
+
+                                // ...
+                            }
+                        });
+
 
 
             }
@@ -73,55 +130,6 @@ public class login extends AppCompatActivity {
 
     }
 
-
-    public void tojoin(String email, String passwd){
-        mAuth.createUserWithEmailAndPassword(email, passwd)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-
-                        // If sign in fails, display a message to the user. If sign in succeeds
-                        // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
-                        if (!task.isSuccessful()) {
-                            Toast.makeText(login.this, "가입 오류",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                        else{//성공적으로 가입이 되면
-                            Toast.makeText(login.this, "가입성공 \n HELLO dear",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-
-                        // ...
-                    }
-                });
-    }
-
-    public void tologin(String email, String passwd){
-        mAuth.signInWithEmailAndPassword(email, passwd)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        Intent toMain = new Intent(login.this,navigation.class);
-
-                        // If sign in fails, display a message to the user. If sign in succeeds
-                        // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
-                        if (!task.isSuccessful()) {
-                            Toast.makeText(login.this, "로그인 오류",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                        else{
-                            Toast.makeText(login.this, "로그인 성공",
-                                    Toast.LENGTH_SHORT).show();
-                            startActivity(toMain);
-                        }
-
-                        // ...
-                    }
-                });
-
-    }
 
     //언제든지 유저 정보를 가져올 수 있음 //사용자의 프로필을 가져옴
     //If a user has signed in successfully you can get their account data at any point with the getCurrentUser method.
