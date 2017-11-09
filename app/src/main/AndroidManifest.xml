@@ -19,7 +19,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".navigation" />
-        <activity android:name=".addFriends"></activity>
+        <activity android:name=".addFriends" />
+        <activity android:name=".addDiary"></activity>
     </application>
 
 </manifest>

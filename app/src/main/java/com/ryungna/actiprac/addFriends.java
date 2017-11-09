@@ -8,13 +8,13 @@ import android.widget.Toast;
 
 public class addFriends extends AppCompatActivity {
 
-    Button adding =(Button)findViewById(R.id.adding);
+    Button adding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_friends);
-
+        adding =(Button)findViewById(R.id.adding);
         adding.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
